@@ -2,6 +2,7 @@ package com.example.androidwebviewexample.ui.fragment
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.os.Message
 import android.util.Log
@@ -101,8 +102,10 @@ class WebViewFragment : Fragment() {
 
     inner class WebViewFragmentWebViewClient: WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            // todo url load url을 보고 상황에 따른 처리
-            return super.shouldOverrideUrlLoading(view, request)
+            val currentUrl = request?.url.toString()
+            val parseUrl = Uri.parse(currentUrl)
+            binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+            return false
         }
     }
 
