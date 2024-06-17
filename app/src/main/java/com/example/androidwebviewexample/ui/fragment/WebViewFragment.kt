@@ -1,14 +1,18 @@
 package com.example.androidwebviewexample.ui.fragment
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.os.Message
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager.LayoutParams
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -102,14 +106,70 @@ class WebViewFragment : Fragment() {
     }
 
     inner class WebViewFragmentWebChromeClient: WebChromeClient() {
+        var newWebViewDialog: Dialog? = null
         override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-            // todo 팝업 및 새창 처리
-            return super.onCreateWindow(view, isDialog, isUserGesture, resultMsg)
+            Log.d("webViewApp", "WebViewFragmentWebChromeClient onCreateWindow() isDialog:: $isDialog")
+            val newWebView = WebView(binding.root.context)
+            newWebView.apply {
+                setWebViewSettings(this.settings)
+                this.webChromeClient = object : WebChromeClient() {
+                    override fun onCloseWindow(window: WebView?) {
+                        super.onCloseWindow(window)
+                        window?.clearHistory()
+                        newWebViewDialog?.dismiss()
+                        newWebViewDialog = null
+                    }
+                }
+                this.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        return false
+                    }
+                }
+            }
+            if(isDialog) {
+                newWebViewDialog = Dialog(binding.root.context)
+                newWebViewDialog?.let { dialog ->
+                    dialog.setContentView(newWebView)
+
+                    dialog.window?.attributes?.apply {
+                        this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                        this.height = ViewGroup.LayoutParams.MATCH_PARENT
+                    }
+
+                    dialog.show()
+                    dialog.setOnKeyListener { _, keyCode, event ->
+                        if(keyCode == KeyEvent.KEYCODE_BACK && event.action == MotionEvent.ACTION_UP) {
+                            if(newWebView.canGoBack()) {
+                                newWebView.goBack()
+                            } else {
+                                newWebView.destroy()
+                                dialog.dismiss()
+                            }
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                }
+                resultMsg?.let {
+                    (it.obj as WebView.WebViewTransport).webView = newWebView
+                    it.sendToTarget()
+                }
+            } else {
+                // todo 새창열기
+            }
+            return true
         }
 
         override fun onCloseWindow(window: WebView?) {
             super.onCloseWindow(window)
-            // todo webView 쿠키 혹은 history Clear
+            if(newWebViewDialog != null) {
+                newWebViewDialog = null
+            }
+            window?.let {
+                it.clearHistory()
+                it.destroy()
+            }
         }
 
         /* 웹사이트 플레이어 기본 포스터 제거 */
