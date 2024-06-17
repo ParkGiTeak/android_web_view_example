@@ -6,9 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Message
 import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
@@ -70,18 +68,22 @@ class WebViewFragment : Fragment() {
         }
     }
 
-    fun webViewExit(): Boolean {
-        return if(binding.webViewMainContent.canGoBack()) {
-            binding.webViewMainContent.goBack()
-            false
-        } else {
-            parentFragmentManager.apply {
-                this.beginTransaction()
-                    .remove(this@WebViewFragment)
-                    .commitAllowingStateLoss()
-                this.popBackStack()
+    fun webViewCanGoBack(): Boolean {
+        binding.webViewMainContent.apply {
+            return if(this.canGoBack()) {
+                this.goBack()
+                true
+            } else {
+                false
             }
-            true
+        }
+    }
+    fun webViewExit() {
+        parentFragmentManager.apply {
+            this.beginTransaction()
+                .remove(this@WebViewFragment)
+                .commitAllowingStateLoss()
+            this.popBackStack()
         }
     }
 

@@ -1,21 +1,16 @@
 package com.example.androidwebviewexample.ui.activity
 
-import android.hardware.input.InputManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import android.window.OnBackInvokedCallback
 import androidx.activity.OnBackPressedCallback
 import com.example.androidwebviewexample.R
 import com.example.androidwebviewexample.databinding.ActivityMainBinding
 import com.example.androidwebviewexample.ui.fragment.WebViewFragment
-import kotlin.properties.Delegates
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +25,8 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this@MainActivity, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if(mWebViewFragment != null) {
-                    if(mWebViewFragment?.webViewExit() == true) {
+                    if(mWebViewFragment?.webViewCanGoBack() != true) {
+                        mWebViewFragment?.webViewExit()
                         mWebViewFragment = null
                     }
                 } else {
