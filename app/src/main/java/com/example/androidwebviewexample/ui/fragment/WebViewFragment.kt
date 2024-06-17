@@ -18,7 +18,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import com.example.androidwebviewexample.databinding.FragmentWebViewBinding
-import com.example.androidwebviewexample.ui.activity.MainActivity
 
 class WebViewFragment : Fragment() {
     private var _binding: FragmentWebViewBinding? = null
@@ -52,19 +51,6 @@ class WebViewFragment : Fragment() {
                 Log.e("webViewApp", "mUrl is null")
                 webViewExit()
             }
-            this.setOnKeyListener { _, keyCode, event ->
-                if(keyCode == KeyEvent.KEYCODE_BACK
-                    && event.action == MotionEvent.ACTION_DOWN) {
-                    if(this.canGoBack()) {
-                        this.goBack()
-                        true
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-            }
         }
     }
 
@@ -84,14 +70,18 @@ class WebViewFragment : Fragment() {
         }
     }
 
-    fun webViewExit() {
-        if(activity is MainActivity) {
-            (activity as MainActivity).supportFragmentManager.apply {
+    fun webViewExit(): Boolean {
+        return if(binding.webViewMainContent.canGoBack()) {
+            binding.webViewMainContent.goBack()
+            false
+        } else {
+            parentFragmentManager.apply {
                 this.beginTransaction()
                     .remove(this@WebViewFragment)
                     .commitAllowingStateLoss()
                 this.popBackStack()
             }
+            true
         }
     }
 

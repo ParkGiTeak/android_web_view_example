@@ -28,8 +28,9 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this@MainActivity, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if(mWebViewFragment != null) {
-                    mWebViewFragment?.webViewExit()
-                    mWebViewFragment = null
+                    if(mWebViewFragment?.webViewExit() == true) {
+                        mWebViewFragment = null
+                    }
                 } else {
                     if(System.currentTimeMillis() > backPressedTime + 2000) {
                         backPressedTime = System.currentTimeMillis()
