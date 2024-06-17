@@ -34,8 +34,10 @@
             android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_weight="1"
+            android:ellipsize="start"
             android:gravity="center"
-            android:text="www.naver.com"
+            android:maxLines="1"
+            android:singleLine="true"
             android:textSize="15dp" />
 
     </LinearLayout>

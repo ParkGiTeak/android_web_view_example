@@ -4,7 +4,9 @@ import android.hardware.input.InputManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -63,6 +65,18 @@ class MainActivity : AppCompatActivity() {
                     } ?: Log.e("webViewApp", "mWebViewFragment is null")
                 } else {
                     Toast.makeText(this@MainActivity, "URL을 입력해주세요.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            binding.etUrlInputView.setOnKeyListener { _, keyCode, event ->
+                if(keyCode == KeyEvent.KEYCODE_ENTER && event.action == MotionEvent.ACTION_UP) {
+                    if(binding.etUrlInputView.hasFocus()) {
+                        binding.btnShowWebView.callOnClick()
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
                 }
             }
         }
