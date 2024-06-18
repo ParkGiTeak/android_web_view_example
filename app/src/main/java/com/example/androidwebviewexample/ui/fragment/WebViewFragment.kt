@@ -141,11 +141,16 @@ class WebViewFragment : Fragment() {
                             newWebViewDialog?.dismiss()
                             newWebViewDialog = null
                         } else {
+                            binding.layoutWebViewFrame.removeView(newWebView)
                         }
                     }
                 }
                 this.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        url?.let { webUrl ->
+                            val parseUrl = Uri.parse(webUrl)
+                            binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+                        }
                         return false
                     }
                 }
@@ -162,6 +167,7 @@ class WebViewFragment : Fragment() {
                         dialog.show()
                     }
                 } else {
+                    binding.layoutWebViewFrame.addView(this)
                 }
 
                 this.setOnKeyListener { _, keyCode, event ->
@@ -175,6 +181,7 @@ class WebViewFragment : Fragment() {
                                 newWebViewDialog?.dismiss()
                                 newWebViewDialog = null
                             } else {
+                                binding.layoutWebViewFrame.removeView(this)
                             }
                         }
                         true
