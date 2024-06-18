@@ -24,18 +24,12 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this@MainActivity, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if(mWebViewFragment != null) {
-                    if(mWebViewFragment?.webViewCanGoBack() != true) {
-                        mWebViewFragment?.webViewExit()
-                        mWebViewFragment = null
-                    }
-                } else {
-                    if(System.currentTimeMillis() > backPressedTime + 2000) {
-                        backPressedTime = System.currentTimeMillis()
-                        Toast.makeText(this@MainActivity, "한 번 더 누르면 종료", Toast.LENGTH_SHORT).show()
-                    } else if(System.currentTimeMillis() <= backPressedTime + 2000) {
-                        exitProcess(0)
-                    }
+                Log.d("webViewApp", "[MainActivity] handleOnBackPressed")
+                if(System.currentTimeMillis() > backPressedTime + 2000) {
+                    backPressedTime = System.currentTimeMillis()
+                    Toast.makeText(this@MainActivity, "한 번 더 누르면 종료", Toast.LENGTH_SHORT).show()
+                } else if(System.currentTimeMillis() <= backPressedTime + 2000) {
+                    exitProcess(0)
                 }
             }
         })
@@ -76,6 +70,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun webViewExit() {
+        mWebViewFragment?.let { webViewFragment ->
+            supportFragmentManager.apply {
+                this.beginTransaction()
+                    .remove(webViewFragment)
+                    .commitAllowingStateLoss()
+                this.popBackStack()
+            }
+        }
+        mWebViewFragment = null
     }
 
     private fun getUrl(): String? {

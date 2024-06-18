@@ -2,6 +2,7 @@ package com.example.androidwebviewexample.ui.fragment
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
@@ -12,20 +13,38 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager.LayoutParams
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import com.example.androidwebviewexample.databinding.FragmentWebViewBinding
+import com.example.androidwebviewexample.ui.activity.MainActivity
 
 class WebViewFragment : Fragment() {
     private var _binding: FragmentWebViewBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var mRootActivity: MainActivity
+    private lateinit var backPressedCallBack: OnBackPressedCallback
+
     private var mUrl: String? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if(context is MainActivity) {
+            mRootActivity = context
+            backPressedCallBack = object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    Log.d("webViewApp", "[WebViewFragment] handleOnBackPressed")
+                    mRootActivity.webViewExit()
+                }
+            }
+            mRootActivity.onBackPressedDispatcher.addCallback(this, backPressedCallBack)
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentWebViewBinding.inflate(inflater, container, false)
@@ -41,9 +60,10 @@ class WebViewFragment : Fragment() {
 
     private fun initWidget() {
         binding.btnWebViewExit.setOnClickListener {
-            webViewExit()
+            mRootActivity.webViewExit()
         }
         binding.webViewMainContent.apply {
+            this.requestFocus()
             mUrl?.let {
                 setWebViewSettings(this.settings)
                 this.webViewClient = WebViewFragmentWebViewClient()
@@ -51,7 +71,21 @@ class WebViewFragment : Fragment() {
                 this.loadUrl(it)
             } ?: kotlin.run {
                 Log.e("webViewApp", "mUrl is null")
-                webViewExit()
+                mRootActivity.webViewExit()
+            }
+            this.setOnKeyListener { _, keyCode, event ->
+                if(keyCode == KeyEvent.KEYCODE_BACK && event.action == MotionEvent.ACTION_UP) {
+                    if(this.canGoBack()) {
+                        this.goBack()
+                        true
+                    } else {
+                        this.clearHistory()
+                        this.destroy()
+                        false
+                    }
+                } else {
+                    false
+                }
             }
         }
     }
@@ -72,23 +106,9 @@ class WebViewFragment : Fragment() {
         }
     }
 
-    fun webViewCanGoBack(): Boolean {
-        binding.webViewMainContent.apply {
-            return if(this.canGoBack()) {
-                this.goBack()
-                true
-            } else {
-                false
-            }
-        }
-    }
-    fun webViewExit() {
-        parentFragmentManager.apply {
-            this.beginTransaction()
-                .remove(this@WebViewFragment)
-                .commitAllowingStateLoss()
-            this.popBackStack()
-        }
+    override fun onDetach() {
+        super.onDetach()
+        backPressedCallBack.remove()
     }
 
     override fun onDestroyView() {
@@ -111,13 +131,17 @@ class WebViewFragment : Fragment() {
             Log.d("webViewApp", "WebViewFragmentWebChromeClient onCreateWindow() isDialog:: $isDialog")
             val newWebView = WebView(binding.root.context)
             newWebView.apply {
+                this.requestFocus()
                 setWebViewSettings(this.settings)
                 this.webChromeClient = object : WebChromeClient() {
                     override fun onCloseWindow(window: WebView?) {
                         super.onCloseWindow(window)
                         window?.clearHistory()
-                        newWebViewDialog?.dismiss()
-                        newWebViewDialog = null
+                        if(isDialog) {
+                            newWebViewDialog?.dismiss()
+                            newWebViewDialog = null
+                        } else {
+                        }
                     }
                 }
                 this.webViewClient = object : WebViewClient() {
@@ -125,38 +149,43 @@ class WebViewFragment : Fragment() {
                         return false
                     }
                 }
-            }
-            if(isDialog) {
-                newWebViewDialog = Dialog(binding.root.context)
-                newWebViewDialog?.let { dialog ->
-                    dialog.setContentView(newWebView)
+                if(isDialog) {
+                    newWebViewDialog = Dialog(binding.root.context)
+                    newWebViewDialog?.let { dialog ->
+                        dialog.setContentView(this)
 
-                    dialog.window?.attributes?.apply {
-                        this.width = ViewGroup.LayoutParams.MATCH_PARENT
-                        this.height = ViewGroup.LayoutParams.MATCH_PARENT
-                    }
-
-                    dialog.show()
-                    dialog.setOnKeyListener { _, keyCode, event ->
-                        if(keyCode == KeyEvent.KEYCODE_BACK && event.action == MotionEvent.ACTION_UP) {
-                            if(newWebView.canGoBack()) {
-                                newWebView.goBack()
-                            } else {
-                                newWebView.destroy()
-                                dialog.dismiss()
-                            }
-                            true
-                        } else {
-                            false
+                        dialog.window?.attributes?.apply {
+                            this.width = ViewGroup.LayoutParams.MATCH_PARENT
+                            this.height = ViewGroup.LayoutParams.MATCH_PARENT
                         }
+
+                        dialog.show()
+                    }
+                } else {
+                }
+
+                this.setOnKeyListener { _, keyCode, event ->
+                    if(keyCode == KeyEvent.KEYCODE_BACK && event.action == MotionEvent.ACTION_UP) {
+                        if(this.canGoBack()) {
+                            this.goBack()
+                        } else {
+                            this.clearHistory()
+                            this.destroy()
+                            if(isDialog) {
+                                newWebViewDialog?.dismiss()
+                                newWebViewDialog = null
+                            } else {
+                            }
+                        }
+                        true
+                    } else {
+                        false
                     }
                 }
-                resultMsg?.let {
-                    (it.obj as WebView.WebViewTransport).webView = newWebView
-                    it.sendToTarget()
-                }
-            } else {
-                // todo 새창열기
+            }
+            resultMsg?.let {
+                (it.obj as WebView.WebViewTransport).webView = newWebView
+                it.sendToTarget()
             }
             return true
         }
