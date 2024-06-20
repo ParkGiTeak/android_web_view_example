@@ -117,10 +117,15 @@ class WebViewFragment : Fragment() {
     }
 
     inner class WebViewFragmentWebViewClient: WebViewClient() {
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            super.onPageStarted(view, url, favicon)
+            url?.let { webUrl ->
+                val parseUrl = Uri.parse(webUrl)
+                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+            }
+        }
+
         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-            val currentUrl = request?.url.toString()
-            val parseUrl = Uri.parse(currentUrl)
-            binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
             return false
         }
     }
@@ -146,11 +151,15 @@ class WebViewFragment : Fragment() {
                     }
                 }
                 this.webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                        url?.let { webUrl ->
-                            val parseUrl = Uri.parse(webUrl)
-                            binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                        if(!isDialog) {
+                            url?.let { webUrl ->
+                                val parseUrl = Uri.parse(webUrl)
+                                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+                            }
                         }
+                    }
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                         return false
                     }
                 }
