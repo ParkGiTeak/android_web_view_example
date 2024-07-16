@@ -59,28 +59,31 @@ class WebViewFragment : Fragment() {
     }
 
     private fun initWidget() {
-        binding.btnWebViewExit.setOnClickListener {
+        binding.mainWebView.setOnCloseButtonClick {
             mRootActivity.webViewExit()
         }
-        binding.webViewMainContent.apply {
+        /*binding.btnWebViewExit.setOnClickListener {
+            mRootActivity.webViewExit()
+        }*/
+        binding.mainWebView.apply {
             this.requestFocus()
             mUrl?.let {
-                setWebViewSettings(this.settings)
-                this.webViewClient = WebViewFragmentWebViewClient()
-                this.webChromeClient = WebViewFragmentWebChromeClient()
-                this.loadUrl(it)
+                setWebViewSettings(this.getWebView().settings)
+                this.getWebView().webViewClient = WebViewFragmentWebViewClient()
+                this.getWebView().webChromeClient = WebViewFragmentWebChromeClient()
+                this.getWebView().loadUrl(it)
             } ?: kotlin.run {
                 Log.e("webViewApp", "mUrl is null")
                 mRootActivity.webViewExit()
             }
-            this.setOnKeyListener { _, keyCode, event ->
+            this.getWebView().setOnKeyListener { _, keyCode, event ->
                 if(keyCode == KeyEvent.KEYCODE_BACK && event.action == MotionEvent.ACTION_UP) {
-                    if(this.canGoBack()) {
-                        this.goBack()
+                    if(this.getWebView().canGoBack()) {
+                        this.getWebView().goBack()
                         true
                     } else {
-                        this.clearHistory()
-                        this.destroy()
+                        this.getWebView().clearHistory()
+                        this.getWebView().destroy()
                         false
                     }
                 } else {
@@ -121,7 +124,8 @@ class WebViewFragment : Fragment() {
             super.onPageStarted(view, url, favicon)
             url?.let { webUrl ->
                 val parseUrl = Uri.parse(webUrl)
-                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+//                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+                binding.mainWebView.setTitleUrlText(parseUrl.scheme + "://" + parseUrl.authority)
             }
         }
 
@@ -146,7 +150,8 @@ class WebViewFragment : Fragment() {
                             newWebViewDialog?.dismiss()
                             newWebViewDialog = null
                         } else {
-                            binding.layoutWebViewFrame.removeView(newWebView)
+                            binding.mainWebView.removePopupWebView(newWebView)
+//                            binding.layoutWebViewFrame.removeView(newWebView)
                         }
                     }
                 }
@@ -155,7 +160,8 @@ class WebViewFragment : Fragment() {
                         if(!isDialog) {
                             url?.let { webUrl ->
                                 val parseUrl = Uri.parse(webUrl)
-                                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
+                                binding.mainWebView.setTitleUrlText(parseUrl.scheme + "://" + parseUrl.authority)
+//                                binding.tvWebViewUrl.text = parseUrl.scheme + "://" + parseUrl.authority
                             }
                         }
                     }
@@ -176,7 +182,8 @@ class WebViewFragment : Fragment() {
                         dialog.show()
                     }
                 } else {
-                    binding.layoutWebViewFrame.addView(this)
+                    binding.mainWebView.addPopupWebView(this)
+//                    binding.layoutWebViewFrame.addView(this)
                 }
 
                 this.setOnKeyListener { _, keyCode, event ->
@@ -190,7 +197,8 @@ class WebViewFragment : Fragment() {
                                 newWebViewDialog?.dismiss()
                                 newWebViewDialog = null
                             } else {
-                                binding.layoutWebViewFrame.removeView(this)
+                                binding.mainWebView.removePopupWebView(this)
+//                                binding.layoutWebViewFrame.removeView(this)
                             }
                         }
                         true
